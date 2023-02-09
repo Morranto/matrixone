@@ -66,6 +66,7 @@ import (
 	"github.com/matrixorigin/matrixone/pkg/sql/colexec/product"
 	"github.com/matrixorigin/matrixone/pkg/sql/colexec/projection"
 	"github.com/matrixorigin/matrixone/pkg/sql/colexec/restrict"
+	"github.com/matrixorigin/matrixone/pkg/sql/colexec/rightsemi"
 	"github.com/matrixorigin/matrixone/pkg/sql/colexec/right"
 	"github.com/matrixorigin/matrixone/pkg/sql/colexec/semi"
 	"github.com/matrixorigin/matrixone/pkg/sql/colexec/single"
@@ -216,6 +217,16 @@ func dupInstruction(sourceIns *vm.Instruction, regMap map[*process.WaitRegister]
 	case vm.Semi:
 		t := sourceIns.Arg.(*semi.Argument)
 		res.Arg = &semi.Argument{
+			Ibucket:    t.Ibucket,
+			Nbucket:    t.Nbucket,
+			Result:     t.Result,
+			Cond:       t.Cond,
+			Typs:       t.Typs,
+			Conditions: t.Conditions,
+		}
+	case vm.RightSemi:
+		t := sourceIns.Arg.(*rightsemi.Argument)
+		res.Arg = &rightsemi.Argument{
 			Ibucket:    t.Ibucket,
 			Nbucket:    t.Nbucket,
 			Result:     t.Result,
@@ -695,6 +706,26 @@ func constructSemi(n *plan.Node, typs []types.Type, proc *process.Process) *semi
 	}
 	cond, conds := extraJoinConditions(n.OnList)
 	return &semi.Argument{
+		Typs:       typs,
+		Result:     result,
+		Cond:       cond,
+		Conditions: constructJoinConditions(conds, proc),
+	}
+}
+
+func constructRightSemi(n *plan.Node, typs []types.Type, proc *process.Process, ibucket, nbucket uint) *rightsemi.Argument {
+	result := make([]int32, len(n.ProjectList))
+	for i, expr := range n.ProjectList {
+		rel, pos := constructJoinResult(expr, proc)
+		if rel != 0 {
+			panic(moerr.NewNYI(proc.Ctx, "semi result '%s'", expr))
+		}
+		result[i] = pos
+	}
+	cond, conds := extraJoinConditions(n.OnList)
+	return &rightsemi.Argument{
+		Ibucket:    uint64(ibucket),
+		Nbucket:    uint64(nbucket),
 		Typs:       typs,
 		Result:     result,
 		Cond:       cond,
@@ -1216,6 +1247,15 @@ func constructHashBuild(in vm.Instruction, proc *process.Process) *hashbuild.Arg
 	case vm.Semi:
 		arg := in.Arg.(*semi.Argument)
 		return &hashbuild.Argument{
+			NeedHashMap: true,
+			Typs:        arg.Typs,
+			Conditions:  arg.Conditions[1],
+		}
+	case vm.RightSemi:
+		arg := in.Arg.(*rightsemi.Argument)
+		return &hashbuild.Argument{
+			Ibucket:     arg.Ibucket,
+			Nbucket:     arg.Nbucket,
 			NeedHashMap: true,
 			Typs:        arg.Typs,
 			Conditions:  arg.Conditions[1],

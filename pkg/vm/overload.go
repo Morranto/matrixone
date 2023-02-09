@@ -52,6 +52,7 @@ import (
 	"github.com/matrixorigin/matrixone/pkg/sql/colexec/projection"
 	"github.com/matrixorigin/matrixone/pkg/sql/colexec/restrict"
 	"github.com/matrixorigin/matrixone/pkg/sql/colexec/right"
+	"github.com/matrixorigin/matrixone/pkg/sql/colexec/rightsemi"
 	"github.com/matrixorigin/matrixone/pkg/sql/colexec/semi"
 	"github.com/matrixorigin/matrixone/pkg/sql/colexec/single"
 	"github.com/matrixorigin/matrixone/pkg/sql/colexec/table_function"
@@ -64,6 +65,7 @@ var stringFunc = [...]func(any, *bytes.Buffer){
 	Top:        top.String,
 	Join:       join.String,
 	Semi:       semi.String,
+	RightSemi:  rightsemi.String,
 	Left:       left.String,
 	Single:     single.String,
 	Limit:      limit.String,
@@ -111,6 +113,7 @@ var prepareFunc = [...]func(*process.Process, any) error{
 	Top:        top.Prepare,
 	Join:       join.Prepare,
 	Semi:       semi.Prepare,
+	RightSemi:  rightsemi.Prepare,
 	Left:       left.Prepare,
 	Right:      right.Prepare,
 	Single:     single.Prepare,
@@ -159,6 +162,7 @@ var execFunc = [...]func(int, *process.Process, any, bool, bool) (bool, error){
 	Top:        top.Call,
 	Join:       join.Call,
 	Semi:       semi.Call,
+	RightSemi:  rightsemi.Call,
 	Left:       left.Call,
 	Right:      right.Call,
 	Single:     single.Call,
