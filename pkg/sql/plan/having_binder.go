@@ -131,6 +131,9 @@ func (b *HavingBinder) BindAggFunc(funcName string, astExpr *tree.FuncExpr, dept
 	b.ctx.aggregateByAst[astStr] = colPos
 	b.ctx.aggregates = append(b.ctx.aggregates, expr)
 
+	if funcName == "group_concat" {
+		b.ctx.orderBy = astExpr.OrderBy
+	}
 	return &plan.Expr{
 		Typ: expr.Typ,
 		Expr: &plan.Expr_Col{

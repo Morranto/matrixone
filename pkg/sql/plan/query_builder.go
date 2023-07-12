@@ -1830,6 +1830,41 @@ func (builder *QueryBuilder) buildSelect(stmt *tree.Select, ctx *BindContext, is
 		}
 	}
 
+	// group concat order
+	var gcOrderBy []*plan.OrderBySpec
+	if ctx.orderBy != nil {
+		orderBinder := NewOrderBinder(projectionBinder, selectList)
+		gcOrderBy = make([]*plan.OrderBySpec, 0, len(ctx.orderBy))
+
+		for _, order := range ctx.orderBy {
+			expr, err := orderBinder.BindExpr(order.Expr)
+			if err != nil {
+				return 0, err
+			}
+
+			orderBy := &plan.OrderBySpec{
+				Expr: expr,
+				Flag: plan.OrderBySpec_INTERNAL,
+			}
+
+			switch order.Direction {
+			case tree.Ascending:
+				orderBy.Flag |= plan.OrderBySpec_ASC
+			case tree.Descending:
+				orderBy.Flag |= plan.OrderBySpec_DESC
+			}
+
+			switch order.NullsPosition {
+			case tree.NullsFirst:
+				orderBy.Flag |= plan.OrderBySpec_NULLS_FIRST
+			case tree.NullsLast:
+				orderBy.Flag |= plan.OrderBySpec_NULLS_LAST
+			}
+
+			gcOrderBy = append(gcOrderBy, orderBy)
+		}
+	}
+
 	// bind limit/offset clause
 	var limitExpr *Expr
 	var offsetExpr *Expr

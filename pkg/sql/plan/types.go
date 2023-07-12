@@ -216,6 +216,8 @@ type BindContext struct {
 	rightChild *BindContext
 
 	defaultDatabase string
+
+	orderBy tree.OrderBy
 }
 
 type NameTuple struct {

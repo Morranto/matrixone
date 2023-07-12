@@ -7447,6 +7447,7 @@ function_call_aggregate:
             Type: $3,
             WindowSpec: $8,
             AggType: 2,
+            OrderBy: $5,
         }
     }
 |   AVG '(' func_type_opt expression  ')' window_spec_opt

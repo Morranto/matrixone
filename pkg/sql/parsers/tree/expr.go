@@ -939,6 +939,9 @@ type FuncExpr struct {
 	AggType AggType
 
 	WindowSpec *WindowSpec
+
+	//for orderby of group_concat
+	OrderBy OrderBy
 }
 
 func (node *FuncExpr) Format(ctx *FmtCtx) {
