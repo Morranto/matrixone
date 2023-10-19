@@ -139,8 +139,12 @@ type AnalyzeInfo struct {
 	MemorySize int64
 	// DiskIO, data size read from disk
 	DiskIO int64
-	// S3IOByte, data size read from s3
-	S3IOByte int64
+	// S3IOReadBytes, data size read from s3
+	S3IOReadBytes int64
+
+	S3IOWriteBytes int64
+
+	S3IOAccessDuration int64
 	// S3IOInputCount, count for PUT, COPY, POST and LIST
 	S3IOInputCount int64
 	// S3IOOutputCount, count for GET, SELECT and other
@@ -497,9 +501,13 @@ func (a *AnalyzeInfo) Reset() {
 	a.OutputSize = 0
 	a.MemorySize = 0
 	a.DiskIO = 0
-	a.S3IOByte = 0
+
+	a.S3IOReadBytes = 0
+	a.S3IOWriteBytes = 0
+	a.S3IOAccessDuration = 0
 	a.S3IOInputCount = 0
 	a.S3IOOutputCount = 0
+
 	a.NetworkIO = 0
 	a.ScanTime = 0
 	a.InsertTime = 0

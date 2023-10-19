@@ -3054,9 +3054,13 @@ func (c *Compile) fillAnalyzeInfo() {
 		atomic.StoreInt64(&c.anal.qry.Nodes[i].AnalyzeInfo.MemorySize, atomic.LoadInt64(&anal.MemorySize))
 		atomic.StoreInt64(&c.anal.qry.Nodes[i].AnalyzeInfo.WaitTimeConsumed, atomic.LoadInt64(&anal.WaitTimeConsumed))
 		atomic.StoreInt64(&c.anal.qry.Nodes[i].AnalyzeInfo.DiskIO, atomic.LoadInt64(&anal.DiskIO))
-		atomic.StoreInt64(&c.anal.qry.Nodes[i].AnalyzeInfo.S3IOByte, atomic.LoadInt64(&anal.S3IOByte))
+
+		atomic.StoreInt64(&c.anal.qry.Nodes[i].AnalyzeInfo.S3IOReadBytes, atomic.LoadInt64(&anal.S3IOReadBytes))
+		atomic.StoreInt64(&c.anal.qry.Nodes[i].AnalyzeInfo.S3IOWriteBytes, atomic.LoadInt64(&anal.S3IOWriteBytes))
+		atomic.StoreInt64(&c.anal.qry.Nodes[i].AnalyzeInfo.S3IOAccessDuration, atomic.LoadInt64(&anal.S3IOAccessDuration))
 		atomic.StoreInt64(&c.anal.qry.Nodes[i].AnalyzeInfo.S3IOInputCount, atomic.LoadInt64(&anal.S3IOInputCount))
 		atomic.StoreInt64(&c.anal.qry.Nodes[i].AnalyzeInfo.S3IOOutputCount, atomic.LoadInt64(&anal.S3IOOutputCount))
+		
 		atomic.StoreInt64(&c.anal.qry.Nodes[i].AnalyzeInfo.NetworkIO, atomic.LoadInt64(&anal.NetworkIO))
 		atomic.StoreInt64(&c.anal.qry.Nodes[i].AnalyzeInfo.ScanTime, atomic.LoadInt64(&anal.ScanTime))
 		atomic.StoreInt64(&c.anal.qry.Nodes[i].AnalyzeInfo.InsertTime, atomic.LoadInt64(&anal.InsertTime))

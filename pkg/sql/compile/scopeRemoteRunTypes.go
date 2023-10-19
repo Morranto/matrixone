@@ -16,10 +16,12 @@ package compile
 
 import (
 	"context"
-	"github.com/matrixorigin/matrixone/pkg/logservice"
 	"hash/crc32"
 	"runtime"
 	"time"
+
+	"github.com/matrixorigin/matrixone/pkg/logservice"
+	"github.com/matrixorigin/matrixone/pkg/util/trace/impl/motrace/statistic"
 
 	"github.com/google/uuid"
 	"github.com/matrixorigin/matrixone/pkg/cnservice/cnclient"
@@ -296,6 +298,9 @@ func (receiver *messageReceiverOnServer) newCompile() *Compile {
 	}
 	c.proc.Ctx = perfcounter.WithCounterSet(c.proc.Ctx, &c.counterSet)
 	c.ctx = context.WithValue(c.proc.Ctx, defines.TenantIDKey{}, pHelper.accountId)
+
+	statsInfo := statistic.StatsInfo{}
+	c.ctx = statistic.ContextWithStatsInfo(c.ctx, &statsInfo)
 
 	c.fill = func(_ any, b *batch.Batch) error {
 		return receiver.sendBatch(b)

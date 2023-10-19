@@ -17,10 +17,12 @@ package compile
 import (
 	"context"
 	"fmt"
-	"github.com/matrixorigin/matrixone/pkg/logservice"
 	"hash/crc32"
 	"sync/atomic"
 	"time"
+
+	"github.com/matrixorigin/matrixone/pkg/logservice"
+	"github.com/matrixorigin/matrixone/pkg/util/trace/impl/motrace/statistic"
 
 	"github.com/google/uuid"
 	"github.com/matrixorigin/matrixone/pkg/common/moerr"
@@ -180,6 +182,12 @@ func cnMessageHandle(receiver *messageReceiverOnServer) error {
 			c.proc.AnalInfos[c.anal.curr].S3IOOutputCount += c.counterSet.FileService.S3.Delete.Load()
 			c.proc.AnalInfos[c.anal.curr].S3IOOutputCount += c.counterSet.FileService.S3.DeleteMulti.Load()
 
+			statsInfo := statistic.StatsInfoFromContext(c.ctx)
+			if statsInfo != nil {
+				c.proc.AnalInfos[c.anal.curr].S3IOAccessDuration += int64(statsInfo.S3AccessTimeConsumption)
+				c.proc.AnalInfos[c.anal.curr].S3IOReadBytes += int64(statsInfo.S3ReadBytes)
+				c.proc.AnalInfos[c.anal.curr].S3IOReadBytes += int64(statsInfo.S3WriteBytes)
+			}
 			receiver.finalAnalysisInfo = c.proc.AnalInfos
 		}
 		c.proc.FreeVectors()
@@ -1466,9 +1474,13 @@ func mergeAnalyseInfo(target *anaylze, ana *pipeline.AnalysisList) {
 		atomic.AddInt64(&target.analInfos[i].TimeConsumed, n.TimeConsumed)
 		atomic.AddInt64(&target.analInfos[i].WaitTimeConsumed, n.WaitTimeConsumed)
 		atomic.AddInt64(&target.analInfos[i].DiskIO, n.DiskIO)
-		atomic.AddInt64(&target.analInfos[i].S3IOByte, n.S3IOByte)
+
+		atomic.AddInt64(&target.analInfos[i].S3IOReadBytes, n.S3IOReadBytes)
+		atomic.AddInt64(&target.analInfos[i].S3IOWriteBytes, n.S3IOWriteBytes)
+		atomic.AddInt64(&target.analInfos[i].S3IOAccessDuration, n.S3IOAccessDuration)
 		atomic.AddInt64(&target.analInfos[i].S3IOInputCount, n.S3IOInputCount)
 		atomic.AddInt64(&target.analInfos[i].S3IOOutputCount, n.S3IOOutputCount)
+
 		atomic.AddInt64(&target.analInfos[i].NetworkIO, n.NetworkIO)
 		atomic.AddInt64(&target.analInfos[i].ScanTime, n.ScanTime)
 		atomic.AddInt64(&target.analInfos[i].InsertTime, n.InsertTime)
@@ -1626,12 +1638,16 @@ func convertToPlanAnalyzeInfo(info *process.AnalyzeInfo) *plan.AnalyzeInfo {
 		MemorySize:       info.MemorySize,
 		WaitTimeConsumed: info.WaitTimeConsumed,
 		DiskIO:           info.DiskIO,
-		S3IOByte:         info.S3IOByte,
-		S3IOInputCount:   info.S3IOInputCount,
-		S3IOOutputCount:  info.S3IOOutputCount,
-		NetworkIO:        info.NetworkIO,
-		ScanTime:         info.ScanTime,
-		InsertTime:       info.InsertTime,
+
+		S3IOReadBytes:      info.S3IOReadBytes,
+		S3IOWriteBytes:     info.S3IOWriteBytes,
+		S3IOAccessDuration: info.S3IOAccessDuration,
+		S3IOInputCount:     info.S3IOInputCount,
+		S3IOOutputCount:    info.S3IOOutputCount,
+
+		NetworkIO:  info.NetworkIO,
+		ScanTime:   info.ScanTime,
+		InsertTime: info.InsertTime,
 	}
 }
 
