@@ -87,12 +87,12 @@ func (builder *QueryBuilder) remapColRefForExpr(expr *Expr, colMap map[[2]int32]
 		if err != nil {
 			return err
 		}
-		//for _, arg := range ne.W.PartitionBy {
-		//	err = builder.remapColRefForExpr(arg, colMap)
-		//	if err != nil {
-		//		return err
-		//	}
-		//}
+		// for _, arg := range ne.W.PartitionBy {
+		// 	err = builder.remapColRefForExpr(arg, colMap)
+		// 	if err != nil {
+		// 		return err
+		// 	}
+		// }
 		for _, order := range ne.W.OrderBy {
 			err = builder.remapColRefForExpr(order.Expr, colMap)
 			if err != nil {
@@ -2655,6 +2655,30 @@ func (builder *QueryBuilder) buildSelect(stmt *tree.Select, ctx *BindContext, is
 					AggList:     ctx.aggregates,
 					BindingTags: []int32{ctx.groupTag, ctx.aggregateTag},
 					WinSpecList: winSpecList,
+				}, ctx)
+
+				partitionBy := make([]*plan.OrderBySpec, 0, len(ctx.groups))
+
+				for i := range ctx.groups {
+					partitionBy = append(partitionBy, &plan.OrderBySpec{
+						Expr: &plan.Expr{
+							Typ: ctx.groups[i].Typ,
+							Expr: &plan.Expr_Col{
+								Col: &plan.ColRef{
+									RelPos: ctx.groupTag,
+									ColPos: int32(i),
+								},
+							},
+						},
+						Flag: plan.OrderBySpec_INTERNAL,
+					})
+				}
+
+				nodeID = builder.appendNode(&plan.Node{
+					NodeType:    plan.Node_PARTITION,
+					Children:    []int32{nodeID},
+					OrderBy:     partitionBy,
+					BindingTags: []int32{},
 				}, ctx)
 
 			} else {
